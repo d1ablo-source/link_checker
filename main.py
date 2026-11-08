@@ -14,7 +14,7 @@ class LinkResult:
     error: str | None = None
     func_time: float | None = None
 
-
+# Ширина колонок
 W_URL = 30
 W_STATUS = 10
 W_FINAL_URL = 30
@@ -23,34 +23,14 @@ W_ERROR = 40
 W_FUNC_TIME = 10
 
 
-timeout_func = 10
-timeout_response = 5
+# Настройки
+TIMEOUT_FUNC = 10
+TIMEOUT_RESPONSE = 5
 
 URL = "URLS.txt"
-N_consistently = 1
-N_async = 20
-semaphores = [N_consistently, N_async]
-
-
-def get_urls_from_file(path: str):
-    p = Path(path)
-    try:
-
-        with p.open(encoding="utf-8") as f:
-            lines = f.readlines()
-        clean_lines = [
-    url
-    for line in lines
-    if (url := line.strip(', \n"'))
-    and not url.startswith("#")
-    and url.startswith(("https://", "http://"))
-]
-        clean_urls = list(dict.fromkeys(clean_lines))
-        return clean_urls
-    except Exception as e:
-        print(f"Error: {str(e).strip()}")
-        raise
-
+N_CONCURRENT = 20
+N_SEQUENTIAL = 1
+semaphores = [N_SEQUENTIAL, N_CONCURRENT]
 
 ROW_TEMPLATE = (
     f"{{url:<{W_URL}}} | "
@@ -60,7 +40,6 @@ ROW_TEMPLATE = (
     f"{{error:<{W_ERROR}}} | "
     f"{{func_time:<{W_FUNC_TIME}}}"
 )
-
 
 def format_cell(value, width, is_error=False):
     if value is None:
@@ -76,32 +55,6 @@ def format_cell(value, width, is_error=False):
     if len(string_value) > width:
         return string_value[:width - 3] + "..."
     return string_value
-
-
-async def check_link(url: str, client, sem):
-    result = LinkResult(url=url)
-    async with sem:
-
-        try:
-            async with asyncio.timeout(timeout_func):
-                start_2 = time.perf_counter()
-                try:
-                    r = await client.get(url, follow_redirects=True, timeout=timeout_response)
-                    result.status_code = r.status_code
-                    result.final_url = str(r.url)
-                    result.redirects = len(r.history)
-                    if result.status_code != 200:
-                        result.error = f"HTTP Error: {r.status_code}"
-                except Exception as e:
-                    error_text = str(e).strip()
-                    result.error = error_text if error_text else type(e).__name__
-                finally:
-
-                    result.func_time = round(time.perf_counter() - start_2, 2)           
-            return result
-        except asyncio.TimeoutError:
-            result.error = f"TimeoutError: timed out after {timeout_func} seconds."
-            return result
 
 
 def table_print(results: list[LinkResult]):
@@ -125,9 +78,59 @@ def table_print(results: list[LinkResult]):
     print("-" * TOTAL_WIDTH)
 
 
+
+
+def get_urls_from_file(path: str):
+    p = Path(path)
+    try:
+
+        with p.open(encoding="utf-8") as f:
+            lines = f.readlines()
+        clean_lines = [
+    url
+    for line in lines
+    if (url := line.strip(', \n"'))
+    and not url.startswith("#")
+    and url.startswith(("https://", "http://"))
+]
+        clean_urls = list(dict.fromkeys(clean_lines))
+        return clean_urls
+    except Exception as e:
+        print(f"Error: {str(e).strip()}")
+        raise
+
+
+
+
+async def check_link(url: str, client, sem):
+    result = LinkResult(url=url)
+    async with sem:
+        start = time.perf_counter()
+        try:
+            async with asyncio.timeout(TIMEOUT_FUNC):
+                try:
+                    r = await client.get(url, follow_redirects=True, timeout=TIMEOUT_RESPONSE)
+                    result.status_code = r.status_code
+                    result.final_url = str(r.url)
+                    result.redirects = len(r.history)
+                    if not 200 <= r.status_code < 400:
+                        result.error = f"HTTP Error: {r.status_code}"
+                except Exception as e:
+                    error_text = str(e).strip()
+                    result.error = error_text if error_text else type(e).__name__
+                finally:
+
+                    result.func_time = round(time.perf_counter() - start, 2)           
+            return result
+        except asyncio.TimeoutError:
+            result.error = f"TimeoutError: timed out after {TIMEOUT_FUNC} seconds."
+            return result
+
+
+
+
 async def main():
     for i in semaphores:
-
         sem = asyncio.Semaphore(i)
         start_1 = time.perf_counter()
         async with httpx.AsyncClient() as client:
