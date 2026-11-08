@@ -29,6 +29,8 @@ timeout_response = 5
 URL = "URLS.txt"
 N_consistently = 1
 N_async = 20
+semaphores = [N_consistently, N_async]
+
 
 def get_urls_from_file(path: str):
     p = Path(path)
@@ -124,24 +126,23 @@ def table_print(results: list[LinkResult]):
 
 
 async def main():
-    sem = asyncio.Semaphore(N_consistently)
-    start_1 = time.perf_counter()
-    async with httpx.AsyncClient() as client:
-        ask = await asyncio.gather(*(check_link(url, client, sem) for url in get_urls_from_file(URL)))
-        AsyncClient_time = round(time.perf_counter() - start_1, 2)
-        table_print(ask)
-        print(f"without asyncio: {AsyncClient_time}")
+    for i in semaphores:
 
-async def async_main():
-    sem = asyncio.Semaphore(N_async)
-    start_1 = time.perf_counter()
-    async with httpx.AsyncClient() as client:
-        ask = await asyncio.gather(*(check_link(url, client, sem) for url in get_urls_from_file(URL)))
-        AsyncClient_time = round(time.perf_counter() - start_1, 2)
-        table_print(ask)
-        print(f"AsyncClient_time: {AsyncClient_time}")
+        sem = asyncio.Semaphore(i)
+        start_1 = time.perf_counter()
+        async with httpx.AsyncClient() as client:
+            ask = await asyncio.gather(*(check_link(url, client, sem) for url in get_urls_from_file(URL)))
+            AsyncClient_time = round(time.perf_counter() - start_1, 2)
+            if i == 1:
+                table_print(ask)
+                print(f"Consistently: {AsyncClient_time}")
+            else:
+                table_print(ask)
+                print(f"Asynchronously: {AsyncClient_time}")
+
+
 
 if __name__ == "__main__":
     asyncio.run(main())
-    asyncio.run(async_main())
+
 
