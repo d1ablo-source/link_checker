@@ -7,7 +7,9 @@ authors = [
     { name = "d1ablo-source", email = "wap-rus1an@mail.ru" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "httpx[cli]>=0.28.1",
+]
 
 [project.scripts]
 link-checker = "link_checker:main"
