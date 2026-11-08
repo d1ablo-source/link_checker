@@ -1,8 +1,35 @@
-"http://github.com", 
-"https://example.com",
-"http://хугвно.com",
-"    ",
-"https://github.com/d1ablo-source/link_checker"
+# --- нормальные ---
+https://www.python.org
+https://httpbin.org/get
+https://example.com
 
-#ссылочки
-"https://httpbin.org/delay/8",
+# --- редиректы ---
+http://github.com
+https://httpbin.org/redirect/3
+
+# --- коды ответа ---
+https://httpbin.org/status/404
+https://httpbin.org/status/403
+https://httpbin.org/status/500
+
+# --- медленные ---
+https://httpbin.org/delay/3
+https://httpbin.org/delay/8
+https://httpbin.org/drip?duration=14&numbytes=14
+
+# --- ошибки соединения ---
+https://this-domain-does-not-exist-12345.com
+https://expired.badssl.com
+http://localhost:9
+
+# --- без схемы ---
+example.com
+
+# --- грязные строки ---
+"https://www.wikipedia.org",
+   https://www.wikipedia.org   
+,
+   
+
+# --- дубликат ---
+https://example.com
