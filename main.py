@@ -13,7 +13,7 @@ class LinkResult:
     redirects: int | None = None
     error: str | None = None
     func_time: float | None = None
-    AsyncClient_time: float | None = None
+
 
 W_URL = 30
 W_STATUS = 10
@@ -21,7 +21,7 @@ W_FINAL_URL = 30
 W_REDIRECTS = 10
 W_ERROR = 40
 W_FUNC_TIME = 10
-W_ASYNCCLIENT_TIME = 10
+
 
 timeout_func = 10
 timeout_response = 5
@@ -48,8 +48,7 @@ ROW_TEMPLATE = (
     f"{{final_url:<{W_FINAL_URL}}} | "
     f"{{redirects:<{W_REDIRECTS}}} | "
     f"{{error:<{W_ERROR}}} | "
-    f"{{func_time:<{W_FUNC_TIME}}} | "
-    f"{{async_time:<{W_ASYNCCLIENT_TIME}}}"
+    f"{{func_time:<{W_FUNC_TIME}}}"
 )
 
 
@@ -71,12 +70,8 @@ def format_cell(value, width, is_error=False):
 
 async def check_link(url: str, client):
     result = LinkResult(url=url)
-    if not url or not url.strip():
-        result.error = "Link not provided"
-        return result
     try:
         async with asyncio.timeout(timeout_func):
-            start_1 = time.perf_counter()
             start_2 = time.perf_counter()
             try:
                 r = await client.get(url, follow_redirects=True, timeout=timeout_response)
@@ -88,7 +83,6 @@ async def check_link(url: str, client):
                 result.error = error_text if error_text else type(e).__name__
             finally:
                 result.func_time = round(time.perf_counter() - start_2, 2)           
-            result.AsyncClient_time = round(time.perf_counter() - start_1, 2)
         return result
     except asyncio.TimeoutError:
         result.error = f"TimeoutError: timed out after {timeout_func} seconds."
@@ -99,7 +93,7 @@ def table_print(results: list[LinkResult]):
     header_row = ROW_TEMPLATE.format(
             url="URL", status="Статус", final_url="Конечный URL", 
             redirects="Редиректы", error="Ошибка", 
-            func_time="Время ф-ии", async_time="Время Async"
+            func_time="Время ф-ии"
     )
     print(header_row)
     TOTAL_WIDTH = len(header_row)
@@ -112,14 +106,17 @@ def table_print(results: list[LinkResult]):
             redirects=format_cell(res.redirects, W_REDIRECTS),
             error=format_cell(res.error, W_ERROR, is_error=True),
             func_time=format_cell(res.func_time, W_FUNC_TIME),
-            async_time=format_cell(res.AsyncClient_time, W_ASYNCCLIENT_TIME)
             ))
+    print("-" * TOTAL_WIDTH)
 
 
 async def main():
+    start_1 = time.perf_counter()
     async with httpx.AsyncClient() as client:
         ask = await asyncio.gather(*(check_link(url, client) for url in get_urls_from_file(URL)))
+        AsyncClient_time = round(time.perf_counter() - start_1, 2)
         table_print(ask)
+        print(f"AsyncClient_time: {AsyncClient_time}")
 
 if __name__ == "__main__":
     asyncio.run(main())
