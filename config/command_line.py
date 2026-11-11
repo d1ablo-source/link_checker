@@ -20,3 +20,4 @@ def parse_arguments():
         parser.error("--concurrency must be greater than 0")
 
     return args
+

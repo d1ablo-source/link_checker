@@ -95,14 +95,14 @@ def get_urls_from_file(path: str):
 
 
 
-async def check_link(url: str, client, sem):
+async def check_link(url: str, client, sem, timeout_func: float, timeout_response: float):
     result = LinkResult(url=url)
     async with sem:
         start = time.perf_counter()
         try:
-            async with asyncio.timeout(args.timeout_func):
+            async with asyncio.timeout(timeout_func):
                 try:
-                    r = await client.get(url, follow_redirects=True, timeout=args.timeout_response)
+                    r = await client.get(url, follow_redirects=True, timeout=timeout_response)
                     result.status_code = r.status_code
                     result.final_url = str(r.url)
                     result.redirects = len(r.history)
@@ -116,7 +116,7 @@ async def check_link(url: str, client, sem):
                     result.func_time = round(time.perf_counter() - start, 2)           
             return result
         except asyncio.TimeoutError:
-            result.error = f"TimeoutError: timed out after {args.timeout_func} seconds."
+            result.error = f"TimeoutError: timed out after {timeout_func} seconds."
             return result
 
 
@@ -127,7 +127,7 @@ async def main():
     sem = asyncio.Semaphore(args.concurrency)
     start_1 = time.perf_counter()
     async with httpx.AsyncClient() as client:
-        ask = await asyncio.gather(*(check_link(url, client, sem) for url in get_urls_from_file(args.url)))
+        ask = await asyncio.gather(*(check_link(url, client, sem, args.timeout_func, args.timeout_response) for url in get_urls_from_file(args.url)))
         AsyncClient_time = round(time.perf_counter() - start_1, 2)
         table_print(ask)
         print(AsyncClient_time)
