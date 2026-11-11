@@ -3,7 +3,9 @@ import asyncio
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from command_line import parse_arguments
 
+args = parse_arguments()
 
 @dataclass
 class LinkResult:
@@ -24,13 +26,8 @@ W_FUNC_TIME = 10
 
 
 # Настройки
-TIMEOUT_FUNC = 10
-TIMEOUT_RESPONSE = 5
 
-URL = "URLS.txt"
-N_CONCURRENT = 20
-N_SEQUENTIAL = 1
-semaphores = [N_SEQUENTIAL, N_CONCURRENT]
+
 
 ROW_TEMPLATE = (
     f"{{url:<{W_URL}}} | "
@@ -107,9 +104,9 @@ async def check_link(url: str, client, sem):
     async with sem:
         start = time.perf_counter()
         try:
-            async with asyncio.timeout(TIMEOUT_FUNC):
+            async with asyncio.timeout(args.timeout_func):
                 try:
-                    r = await client.get(url, follow_redirects=True, timeout=TIMEOUT_RESPONSE)
+                    r = await client.get(url, follow_redirects=True, timeout=args.timeout_response)
                     result.status_code = r.status_code
                     result.final_url = str(r.url)
                     result.redirects = len(r.history)
@@ -123,25 +120,21 @@ async def check_link(url: str, client, sem):
                     result.func_time = round(time.perf_counter() - start, 2)           
             return result
         except asyncio.TimeoutError:
-            result.error = f"TimeoutError: timed out after {TIMEOUT_FUNC} seconds."
+            result.error = f"TimeoutError: timed out after {args.timeout_func} seconds."
             return result
 
 
 
 
 async def main():
-    for i in semaphores:
-        sem = asyncio.Semaphore(i)
-        start_1 = time.perf_counter()
-        async with httpx.AsyncClient() as client:
-            ask = await asyncio.gather(*(check_link(url, client, sem) for url in get_urls_from_file(URL)))
-            AsyncClient_time = round(time.perf_counter() - start_1, 2)
-            if i == 1:
-                table_print(ask)
-                print(f"Consistently: {AsyncClient_time}")
-            else:
-                table_print(ask)
-                print(f"Asynchronously: {AsyncClient_time}")
+
+    sem = asyncio.Semaphore(args.concurrency)
+    start_1 = time.perf_counter()
+    async with httpx.AsyncClient() as client:
+        ask = await asyncio.gather(*(check_link(url, client, sem) for url in get_urls_from_file(args.url)))
+        AsyncClient_time = round(time.perf_counter() - start_1, 2)
+        table_print(ask)
+        print(AsyncClient_time)
 
 
 

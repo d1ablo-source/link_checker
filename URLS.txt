@@ -15,7 +15,7 @@ https://httpbin.org/status/500
 # --- медленные ---
 https://httpbin.org/delay/3
 https://httpbin.org/delay/8
-https://httpbin.org/drip?duration=14&numbytes=14
+https://httpbin.org/drip?duration=8&numbytes=100
 
 # --- ошибки соединения ---
 https://this-domain-does-not-exist-12345.com
