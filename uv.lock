@@ -110,6 +110,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx", extra = ["cli"] },
+    { name = "pytest" },
 ]
 
 [package.dev-dependencies]
@@ -119,7 +120,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "httpx", extras = ["cli"], specifier = ">=0.28.1" }]
+requires-dist = [
+    { name = "httpx", extras = ["cli"], specifier = ">=0.28.1" },
+    { name = "pytest", specifier = ">=9.2.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [

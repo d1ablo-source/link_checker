@@ -3,9 +3,8 @@ import asyncio
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from command_line import parse_arguments
+from config.command_line import parse_arguments
 
-args = parse_arguments()
 
 @dataclass
 class LinkResult:
@@ -26,9 +25,6 @@ W_FUNC_TIME = 10
 
 
 # Настройки
-
-
-
 ROW_TEMPLATE = (
     f"{{url:<{W_URL}}} | "
     f"{{status:<{W_STATUS}}} | "
@@ -127,7 +123,7 @@ async def check_link(url: str, client, sem):
 
 
 async def main():
-
+    args = parse_arguments()
     sem = asyncio.Semaphore(args.concurrency)
     start_1 = time.perf_counter()
     async with httpx.AsyncClient() as client:

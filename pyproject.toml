@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.14"
 dependencies = [
     "httpx[cli]>=0.28.1",
+    "pytest>=9.2.0",
 ]
 
 [project.scripts]
