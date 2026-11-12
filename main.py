@@ -75,22 +75,19 @@ def table_print(results: list[LinkResult]):
 
 def get_urls_from_file(path: str):
     p = Path(path)
-    try:
 
-        with p.open(encoding="utf-8") as f:
-            lines = f.readlines()
-        clean_lines = [
-    url
-    for line in lines
-    if (url := line.strip(', \n"'))
-    and not url.startswith("#")
-    and url.startswith(("https://", "http://"))
+    with p.open(encoding="utf-8") as f:
+        lines = f.readlines()
+    clean_lines = [
+url
+for line in lines
+if (url := line.strip(', \n"'))
+and not url.startswith("#")
+and url.startswith(("https://", "http://"))
 ]
-        clean_urls = list(dict.fromkeys(clean_lines))
-        return clean_urls
-    except Exception as e:
-        print(f"Error: {str(e).strip()}")
-        raise
+    clean_urls = list(dict.fromkeys(clean_lines))
+    return clean_urls
+
 
 
 

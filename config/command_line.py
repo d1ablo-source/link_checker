@@ -6,7 +6,7 @@ def parse_arguments():
     parser.add_argument("url", type=str)
     parser.add_argument("--timeout_func", type=float, default=10.0)
     parser.add_argument("--timeout_response", type=float, default=5.0)
-    parser.add_argument("--concurrency", type=int, default=1)
+    parser.add_argument("--concurrency", type=int, default=20)
 
     args = parser.parse_args()
 
